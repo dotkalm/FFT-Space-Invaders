@@ -15,3 +15,14 @@ export interface TPlaySweepParams {
   time: number;
   waveTable: TWaveTable;
 }
+
+export interface TConnectNewOscilatorArguments {
+    audioCtx: AudioContext;
+    periodicWave: PeriodicWave;
+    gainNode: GainNode;
+    frequency: number;
+    time: number;
+    duration: number;
+}
+
+export type TConnectNewOscilator = (args: TConnectNewOscilatorArguments) => void;
