@@ -1,4 +1,4 @@
-import { type TWaveTable } from '../../types';
+import { type TWaveTable } from'@/types';
 export const bassSubDub2: TWaveTable = {
   real: [
     0.000000,

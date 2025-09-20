@@ -1,4 +1,4 @@
-import { type TWaveTable } from '../../types';
+import { type TWaveTable } from'@/types';
 export const pulse: TWaveTable = {
   'real': [
     1.000000,

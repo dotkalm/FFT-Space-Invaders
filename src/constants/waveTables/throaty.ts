@@ -1,4 +1,4 @@
-import { type TWaveTable } from '../../types';
+import { type TWaveTable } from '@/types';
 export const throaty: TWaveTable = {
   real: [
     0.000000,

@@ -1,4 +1,4 @@
-import { type TWaveTable } from '../../types';
+import { type TWaveTable } from'@/types';
 export const britBluesDriven: TWaveTable = {
   real: [
     0.000000,
