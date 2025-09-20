@@ -7,10 +7,10 @@
     "rootDir": "./src",
     "paths": {
       "@/*": ["./src/*"],
-      "@styles/*": ["./src/styles/*"],
+      "@/styles/*": ["./src/styles/*"],
       "@/types/*": ["./src/types/*"],
-      "@utils/*": ["./src/utils/*"],
-      "@constants/*": ["./src/constants/*"]
+      "@/helpers/*": ["./src/helpers/*"],
+      "@/constants/*": ["./src/constants/*"]
     }
   },
   "include": ["src/**/*"],

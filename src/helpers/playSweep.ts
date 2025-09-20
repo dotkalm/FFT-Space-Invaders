@@ -2,7 +2,7 @@ import {
     type TPlaySweep,
     type TConnectNewOscilator,
 } from "@/types";
-import { waveMaker } from "@/utils";
+import { waveMaker } from "../helpers";
 
 export const playSweep: TPlaySweep = ({time, audioCtx, waveTable, duration, gainNode}) => {
   const periodicWave = waveMaker(waveTable, audioCtx);
