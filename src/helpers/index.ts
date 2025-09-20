@@ -1,2 +1,2 @@
-export * from './playSweep';
-export * from './waveMaker';
+export * from './playSweep.js';
+export * from './waveMaker.js';

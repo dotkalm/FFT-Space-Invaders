@@ -14,13 +14,13 @@ const gameSetup = () => {
     const targetInterval = 1000;
 
     let performanceMeasure = performance.measure("fps");
-
     const step = () => {
         const currentTime = performance.now();
         animationId += 1;
         if (currentTime - lastTime >= targetInterval) {
             lastTime = currentTime;
             performanceMeasure = performance.measure("fps");
+            console.log("fps", performanceMeasure.duration);
 
             playSweep({
                 time: audioContext.currentTime,
@@ -37,4 +37,6 @@ const gameSetup = () => {
     requestAnimationFrame(step);
 };
 
-gameSetup();
+window.document.getElementById("startButton")?.addEventListener("click", () => {
+    gameSetup();
+});
