@@ -1,5 +1,5 @@
 import { type TWaveTable } from'@/types';
-const saw: TWaveTable = {
+export const saw: TWaveTable = {
   'real': [
     0.000000,
     0.000000,

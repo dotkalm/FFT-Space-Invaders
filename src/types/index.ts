@@ -10,7 +10,6 @@ export type TPlaySweep = (params: TPlaySweepParams) => void;
 export interface TPlaySweepParams {
   audioCtx: AudioContext;
   duration: number;
-  frequency: number;
   gainNode: GainNode;
   time: number;
   waveTable: TWaveTable;
@@ -26,3 +25,9 @@ export interface TConnectNewOscilatorArguments {
 }
 
 export type TConnectNewOscilator = (args: TConnectNewOscilatorArguments) => void;
+
+export interface TCurrentGame {
+    audioContext: AudioContext;
+    analyser: AnalyserNode;
+    gainNode: GainNode;
+};

@@ -1,42 +1,81 @@
-import { warmSaw } from "./constants/waveTables/warmSaw.js";
+import { guitarFuzz } from "./constants/waveTables/guitarFuzz.js";
 import { playSweep } from "./helpers/playSweep.js";
+import { TCurrentGame } from "./types/index.js";
 
-const gameSetup = () => {
+let playing: boolean;
+let gameStarted: boolean = false;
+let currentGame: TCurrentGame | null = null;
+let animationId: number | null = null;
+let lastTime = 0;
+let performanceMeasure: PerformanceMeasure;
+const targetInterval = 1500;
+
+const gameSetup = (): TCurrentGame => {
+    gameStarted = true;
+    window.document.getElementById("startButton")!.textContent = "Pause Game";
     const audioContext: AudioContext = new AudioContext();
-    const analyser: AnalyserNode = audioContext.createAnalyser();
+    const analyser = audioContext.createAnalyser();
     const gainNode: GainNode = audioContext.createGain();
     gainNode.gain.value = 0.1;
     gainNode.connect(audioContext.destination);
-    let animate = true;
-
-    let animationId: number = 0;
-    let lastTime = 0;
-    const targetInterval = 1000;
-
-    let performanceMeasure = performance.measure("fps");
-    const step = () => {
-        const currentTime = performance.now();
-        animationId += 1;
-        if (currentTime - lastTime >= targetInterval) {
-            lastTime = currentTime;
-            performanceMeasure = performance.measure("fps");
-            console.log("fps", performanceMeasure.duration);
-
-            playSweep({
-                time: audioContext.currentTime,
-                audioCtx: audioContext, 
-                waveTable: warmSaw,
-                frequency: 440,
-                duration: 0.5,
-                gainNode,
-            });
-        }
-        animate && requestAnimationFrame(step);
+    animate();
+    return {
+        audioContext,
+        analyser,
+        gainNode,
     };
-
-    requestAnimationFrame(step);
 };
 
+function currentStateLabel(): 'playing' | 'paused' | 'stopped' {
+    let label = window.document.getElementById("startButton")!.textContent as 'Pause Game' | 'Continue Game' | 'Start Game';
+    switch (label) {
+        case 'Pause Game':
+            return 'playing';
+        case 'Continue Game':
+            return 'paused';
+        case 'Start Game':
+            return 'stopped';
+    }
+}
+
 window.document.getElementById("startButton")?.addEventListener("click", () => {
-    gameSetup();
+    const currentState = currentStateLabel();
+    console.log({currentState, gameStarted})
+    if(currentState === "stopped") {
+        currentGame = gameSetup();
+        playing = !playing;
+    }
+    if(currentState === "paused" && gameStarted) {
+        window.document.getElementById("startButton")!.textContent = "Pause Game";
+        playing = !playing;
+        animationId = requestAnimationFrame(step);
+    }
+    if(currentState === "playing" && gameStarted) {
+        window.document.getElementById("startButton")!.textContent = "Continue Game";
+        if(animationId) cancelAnimationFrame(animationId); 
+        playing = !playing;
+    }
 });
+
+function animate(): void {
+    performanceMeasure = performance.measure("fps");
+    animationId = requestAnimationFrame(step);
+}
+
+function step(): void {
+    if(!currentGame) return;
+    const { audioContext, gainNode } = currentGame;
+    const currentTime = performance.now();
+    if (currentTime - lastTime >= targetInterval) {
+        lastTime = currentTime;
+        performanceMeasure = performance.measure("fps");
+        playSweep({
+            time: audioContext.currentTime,
+            audioCtx: audioContext, 
+            waveTable: guitarFuzz,
+            duration: 0.01,
+            gainNode,
+        });
+    }
+    animationId = requestAnimationFrame(step);
+};
