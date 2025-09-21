@@ -31,3 +31,20 @@ export interface TCurrentGame {
     analyser: AnalyserNode;
     gainNode: GainNode;
 };
+
+export enum PLAY_STATE {
+  PLAYING = 'playing',
+  PAUSED = 'paused',
+  STOPPED = 'stopped',
+};
+
+export enum PLAY_STATE_LABEL {
+  PAUSE = 'Pause Game',
+  CONTINUE = 'Continue Game',
+  START = 'Start Game',
+}
+
+export enum ID {
+  FPS = 'fps',
+  STATE_BUTTON = 'stateButton'
+}
