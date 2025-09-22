@@ -16,7 +16,7 @@ export enum ID {
 }
 
 export enum SETTINGS {
-  GAIN_VALUE = 0.5,
+  GAIN_VALUE = 0.1,
   OSCILLATOR_DURATION = 0.1,
   ROWS = 5,
   PIXEL_WIDTH = 800,
@@ -25,11 +25,8 @@ export enum SETTINGS {
 }
 
 export enum INITIAL_VALUES {
-  INTERVAL = 60,
-  OSCILLATOR_COUNT = 55,
+  INTERVAL = 100,
   ROWS = 5,
-  FREQUENCY_RANGE = 24000,
-  BIN_COUNT = 512,
 }
 
 export enum END_VALUES {
@@ -47,7 +44,7 @@ export const FFT_CONFIG = {
   
 export const binResolution = FFT_CONFIG.sampleRate / FFT_CONFIG.fftSize; // ~5.38 Hz per bin
 
-export const bracketFrequencyRanges = [
+export const initialBracketFrequencyRanges = [
     { min: 2200, max: 5800},
     { min: 6200, max: 9800 },
     { min: 10200, max: 13800 },

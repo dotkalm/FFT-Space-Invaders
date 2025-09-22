@@ -3,22 +3,21 @@ import {
     type TConnectNewOscilator,
 } from "../types";
 import { createPureSineWave } from "../helpers/index.js";
-import { bracketFrequencyRanges, FFT_CONFIG,  } from "../constants/index.js";
+import { FFT_CONFIG,  } from "../constants/index.js";
 
 export const playSweep: TPlaySweep = ({
-  time, 
   audioCtx, 
+  bracketFrequencyRanges,
   duration, 
   gainNode, 
   gameBoard,
-  moveDirectionCallback,
+  time, 
 }) => {
     const sineWave = createPureSineWave(audioCtx);
     
     let timeOffset = 0;
-    moveDirectionCallback();
     gameBoard.forEach((row, rowIndex) => {
-      const frequencies = generatePeakFrequencies(rowIndex);
+      const frequencies = generatePeakFrequencies(rowIndex, bracketFrequencyRanges[rowIndex]);
       row.forEach((isActive, index) => {
         if (isActive && index < frequencies.length) {
             const frequency = frequencies[index];
@@ -42,8 +41,8 @@ export const playSweep: TPlaySweep = ({
     });
 };
 
-export function generatePeakFrequencies(rowIndex: number): number[] {
-  const { min, max } = bracketFrequencyRanges[rowIndex];
+export function generatePeakFrequencies(rowIndex: number, bracketFrequencyRanges: { min: number; max: number }): number[] {
+  const { min, max } = bracketFrequencyRanges;
   const { peakCount: totalPeaks, rowCount} = FFT_CONFIG;
   const peakCount = totalPeaks / rowCount;
 

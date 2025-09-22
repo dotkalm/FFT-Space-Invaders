@@ -11,15 +11,11 @@ export type TGameBoard = boolean[][];
 
 export interface TPlaySweepParams {
   audioCtx: AudioContext;
+  bracketFrequencyRanges: { min: number; max: number }[];
   duration: number;
   gainNode: GainNode;
   gameBoard: TGameBoard;
-  oscillatorCount: number;
   time: number;
-  waveTable: TWaveTable;
-  direction: "left" | "right";
-  frequencyOffset: number;
-  moveDirectionCallback: () => void;
 }
 
 export interface TConnectNewOscilatorArguments {

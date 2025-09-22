@@ -1,8 +1,19 @@
 #controller-grid {
+    position: absolute;
+    bottom: 40px;
     display: grid;
     grid-template-rows: repeat(5, 1fr);
     grid-template-columns: repeat(11, 1fr);
 }
 svg {
+    position: absolute;
+    top: 30px;
     height: 60vh;
+    width: 50vw;
+    background-color: black;
+}
+#stateButton{
+    position: absolute;
+    top: 10px;
+    left: 10px;
 }

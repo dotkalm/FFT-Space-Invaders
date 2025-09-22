@@ -1,8 +1,7 @@
-import { pulse } from "./constants/waveTables/pulse.js";
 import { playSweep } from "./helpers/playSweep.js";
 import { TCurrentGame, TGameBoard } from "./types/index.js";
 import { makeSVGRows } from "./components/SVG.js";
-import { updateControllerGrid, toggleCell } from "./helpers/controllerGrid.js";
+import { updateControllerGrid } from "./helpers/controllerGrid.js";
 
 import { 
     ID,
@@ -11,6 +10,7 @@ import {
     PLAY_STATE_LABEL,
     SETTINGS,
     FFT_CONFIG,
+    initialBracketFrequencyRanges,
 } from './constants/index.js';
 
 let gameBoard = new Array(5).fill(new Array(11).fill(true)) as TGameBoard;
@@ -20,25 +20,13 @@ let currentGame: TCurrentGame | null = null;
 let fftData: Uint8Array<ArrayBuffer>;
 let gameStarted: boolean = false;
 let lastTimeOscillator = 0;
-let oscillatorCount: number = INITIAL_VALUES.OSCILLATOR_COUNT;
 let playing: boolean;
 let lastFFTData: string = '';
 let svgId: number = 0;
 let direction: "left" | "right" = "right";
-
-function moveDirectionCallback(): void {
-    const leftTrue = [];
-    const rightTrue = [];
-    for (let i = 0; i < gameBoard.length; i++) {
-        const currentRow = gameBoard[i];
-        const firstTrue = currentRow.indexOf(true);
-        const lastTrue = currentRow.lastIndexOf(true);
-        leftTrue.push(firstTrue);
-        rightTrue.push(lastTrue);
-    }
-    const range = (Math.max(...rightTrue) - Math.min(...leftTrue)) + 1;
-    direction = direction === "left" ? "right" : "left";
-};
+let xOffset: number = 0;
+let xFrequencyOffset: number = 0;
+const bracketFrequencyRanges = [...initialBracketFrequencyRanges];
 
 const gameSetup = (): TCurrentGame => {
     gameStarted = true;
@@ -99,19 +87,17 @@ function step(): void {
     const { analyser, audioContext, gainNode } = currentGame;
     const currentTime = performance.now();
     const runSweep = currentTime - lastTimeOscillator >= INITIAL_VALUES.INTERVAL;
+    moveDirectionXTransform();
+    //moveDirection();
     if (runSweep) {
         lastTimeOscillator = currentTime;
         playSweep({
             audioCtx: audioContext, 
+            bracketFrequencyRanges,
             duration: SETTINGS.OSCILLATOR_DURATION,
             gainNode,
             gameBoard,
-            oscillatorCount,
             time: audioContext.currentTime,
-            waveTable: pulse,
-            moveDirectionCallback,
-            direction,
-            frequencyOffset: 0,
         });
     }
     analyser.getByteFrequencyData(fftData);
@@ -123,6 +109,7 @@ function step(): void {
             gameBoard,
             yOffset,
             svgId,
+            xOffset,
         });
     }
     lastFFTData = JSON.stringify([...fftData]);
@@ -157,3 +144,20 @@ gridContainer.addEventListener("click", (e) => {
         target.style.backgroundColor = "green";
     }
 });
+
+function moveDirectionXTransform(): void {
+    const multiplier = gameBoard.flat().filter(e => !e).length + 1;
+    const increments = multiplier * 0.08;
+    xOffset += (direction === "right" ? increments : -increments);
+    for (let i = 0; i < gameBoard.length; i++) {
+        const svgGroup = document.getElementById(`group-${svgId}-row-${i}`);
+        if(!svgGroup) continue;
+        const { left, right } = svgGroup.getBoundingClientRect();
+        if(right >= 680){
+            direction = "left";
+        }
+        if(left <= 20){
+            direction = "right";
+        }
+    }
+};

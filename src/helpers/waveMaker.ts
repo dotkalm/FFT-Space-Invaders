@@ -13,9 +13,9 @@ export function createPureSineWave(audioContext: AudioContext): PeriodicWave {
     const imag = new Float32Array(2);
     
     real[0] = 0; // DC component
-    real[1] = 0; // Cosine component of fundamental
+    real[1] = 1; // Cosine component of fundamental
     imag[0] = 0; // DC component  
-    imag[1] = 1; // Sine component of fundamental
+    imag[1] = .01; // Sine component of fundamental
     
     return audioContext.createPeriodicWave(real, imag);
 }
