@@ -2,6 +2,7 @@ import { pulse } from "./constants/waveTables/pulse.js";
 import { playSweep } from "./helpers/playSweep.js";
 import { TCurrentGame, TGameBoard } from "./types/index.js";
 import { makeSVGRows } from "./components/SVG.js";
+import { updateControllerGrid, toggleCell } from "./helpers/controllerGrid.js";
 
 import { 
     ID,
@@ -11,7 +12,7 @@ import {
     SETTINGS,
 } from './constants/index.js';
 
-const gameBoard = new Array(5).fill(new Array(11).fill(true)) as TGameBoard;
+let gameBoard = new Array(5).fill(new Array(11).fill(true)) as TGameBoard;
 let animationId: number;
 let yOffset: number = 0;
 let currentGame: TCurrentGame | null = null;
@@ -34,6 +35,7 @@ const gameSetup = (): TCurrentGame => {
     gainNode.gain.value = SETTINGS.GAIN_VALUE;
     gainNode.connect(audioContext.destination);
     animate();
+    updateControllerGrid(gameBoard);
     return {
         audioContext,
         analyser,
@@ -115,3 +117,23 @@ function connectAnalyser(): void {
     analyser.connect(audioContext.destination);
     fftData = new Uint8Array(analyser.frequencyBinCount);
 };
+const gridContainer = document.getElementById("controller-grid");
+
+gridContainer.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.id.startsWith("cell-")) return;
+
+    const [, rowStr, colStr] = target.id.split("-");
+    const rowIndex = Number(rowStr);
+    const colIndex = Number(colStr);
+
+    if (isNaN(rowIndex) || isNaN(colIndex)) return;
+
+    gameBoard[rowIndex][colIndex] = !gameBoard[rowIndex][colIndex];
+    // Toggle background color
+    if (target.style.backgroundColor === "green") {
+        target.style.backgroundColor = "white";
+    } else {
+        target.style.backgroundColor = "green";
+    }
+});
