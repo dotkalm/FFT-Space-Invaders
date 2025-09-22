@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recurse Center Game</title>
 </head>
+
 <body>
-    <button id="startButton">Start Game</button>
+    <button id="stateButton">Start Game</button>
+    <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" id="gameBoard">
+        <rect x="0" y="0" width="800" height="100" fill="#FF6B6B" />
+        <rect x="0" y="100" width="800" height="100" fill="#4ECDC4" />
+        <rect x="0" y="200" width="800" height="100" fill="#45B7D1" />
+        <rect x="0" y="300" width="800" height="100" fill="#96CEB4" />
+        <rect x="0" y="400" width="800" height="100" fill="#FFEAA7" />
+    </svg>
+    <div id="debugger">
+
+    </div>
     <script type="module" src="dist/invaders.js" defer></script>
 </body>
+
 </html>

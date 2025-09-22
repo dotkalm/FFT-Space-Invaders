@@ -7,10 +7,20 @@ export type TWaveMaker = (wavetable: TWaveTable, audioCtx: AudioContext) => Peri
 
 export type TPlaySweep = (params: TPlaySweepParams) => void;
 
+export type TGameBoard = [
+  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
+  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
+  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
+  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
+  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
+];
+
 export interface TPlaySweepParams {
   audioCtx: AudioContext;
   duration: number;
   gainNode: GainNode;
+  gameBoard: TGameBoard;
+  oscillatorCount: number;
   time: number;
   waveTable: TWaveTable;
 }
@@ -32,19 +42,9 @@ export interface TCurrentGame {
     gainNode: GainNode;
 };
 
-export enum PLAY_STATE {
-  PLAYING = 'playing',
-  PAUSED = 'paused',
-  STOPPED = 'stopped',
-};
-
-export enum PLAY_STATE_LABEL {
-  PAUSE = 'Pause Game',
-  CONTINUE = 'Continue Game',
-  START = 'Start Game',
+export interface TMakeOscillatorIntervalsParams {
+  intervalSpaces: number;
+  frequencyRange: number;
 }
 
-export enum ID {
-  FPS = 'fps',
-  STATE_BUTTON = 'stateButton'
-}
+export type TMakeOscillatorIntervalValue = (params: TMakeOscillatorIntervalsParams) => number;
