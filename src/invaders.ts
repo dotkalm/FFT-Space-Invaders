@@ -37,7 +37,6 @@ function moveDirectionCallback(): void {
         rightTrue.push(lastTrue);
     }
     const range = (Math.max(...rightTrue) - Math.min(...leftTrue)) + 1;
-    //console.log(Math.min(...leftTrue), Math.max(...rightTrue), gameBoard, leftTrue, rightTrue);
     direction = direction === "left" ? "right" : "left";
 };
 
@@ -150,10 +149,7 @@ gridContainer.addEventListener("click", (e) => {
 
     const currentRow = [...gameBoard[rowIndex]];
     currentRow[colIndex] = !currentRow[colIndex];
-    console.log({currentRow});
     gameBoard[rowIndex] = currentRow;
-    // gameBoard[rowIndex][colIndex] = !gameBoard[rowIndex][colIndex];
-    gameBoard.forEach((row) => console.log(row))
     // Toggle background color
     if (target.style.backgroundColor === "green") {
         target.style.backgroundColor = "white";

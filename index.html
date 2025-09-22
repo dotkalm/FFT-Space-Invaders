@@ -12,6 +12,20 @@
 <body>
     <button id="stateButton">Start Game</button>
     <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" id="gameBoard">
+    <defs>
+        <!-- Linear gradient (top to bottom) -->
+        <linearGradient id="fftGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="rgba(0, 94, 98, 0)" />
+        <stop offset="50%" stop-color="rgba(245, 253, 102, 0)" />
+        <stop offset="60%" stop-color="rgba(5, 253, 2, 0)" />
+        <stop offset="71%" stop-color="rgba(100, 0, 2, 0)" />
+        <stop offset="71%" stop-color="rgba(100, 0, 2, .25)" />
+        <stop offset="100%" stop-color="rgba(0 0, 0, 1)" />
+        </linearGradient>
+        <pattern id="imagePattern" patternUnits="objectBoundingBox" width="50" height="35" preserveAspectRatio="xMidYMid slice">
+            <image href="./alien.jpg" width="50" height="35" preserveAspectRatio="xMidYMid slice" />
+        </pattern>
+    </defs>
         <rect x="0" y="0" width="800" height="100" fill="#FF6B6B" />
         <rect x="0" y="100" width="800" height="100" fill="#4ECDC4" />
         <rect x="0" y="200" width="800" height="100" fill="#45B7D1" />

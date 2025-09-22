@@ -25,7 +25,7 @@ export enum SETTINGS {
 }
 
 export enum INITIAL_VALUES {
-  INTERVAL = 120,
+  INTERVAL = 60,
   OSCILLATOR_COUNT = 55,
   ROWS = 5,
   FREQUENCY_RANGE = 24000,
@@ -39,7 +39,7 @@ export enum END_VALUES {
 
 export const FFT_CONFIG = {
     sampleRate: 44100,
-    fftSize: 2048,
+    fftSize: 1024,
     frequencyRange: { min: 2000, max: 22000 }, // Avoid DC and very high frequencies
     peakCount: 55
 }; 
