@@ -41,15 +41,16 @@ export const FFT_CONFIG = {
     sampleRate: 44100,
     fftSize: 1024,
     frequencyRange: { min: 2000, max: 22000 }, // Avoid DC and very high frequencies
-    peakCount: 55
+    peakCount: 55,
+    rowCount: 5,
 }; 
   
 export const binResolution = FFT_CONFIG.sampleRate / FFT_CONFIG.fftSize; // ~5.38 Hz per bin
 
 export const bracketFrequencyRanges = [
-    { min: 2000, max: 6000 },
-    { min: 6000, max: 10000 },
-    { min: 10000, max: 14000 },
-    { min: 14000, max: 18000 },
-    { min: 18000, max: 22000 },
+    { min: 2200, max: 5800},
+    { min: 6200, max: 9800 },
+    { min: 10200, max: 13800 },
+    { min: 14200, max: 17800 },
+    { min: 18200, max: 21800 },
 ]

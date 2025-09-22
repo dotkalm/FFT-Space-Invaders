@@ -3,7 +3,7 @@ import {
     type TConnectNewOscilator,
 } from "../types";
 import { createPureSineWave } from "../helpers/index.js";
-import { INITIAL_VALUES, END_VALUES, SETTINGS, FFT_CONFIG, binResolution } from "../constants/index.js";
+import { bracketFrequencyRanges, FFT_CONFIG,  } from "../constants/index.js";
 
 export const playSweep: TPlaySweep = ({
   time, 
@@ -13,12 +13,13 @@ export const playSweep: TPlaySweep = ({
   gameBoard,
   moveDirectionCallback,
 }) => {
-    const frequencies = generatePeakFrequencies();
     const sineWave = createPureSineWave(audioCtx);
     
     let timeOffset = 0;
     moveDirectionCallback();
-    gameBoard.flat().forEach((isActive, index) => {
+    gameBoard.forEach((row, rowIndex) => {
+      const frequencies = generatePeakFrequencies(rowIndex);
+      row.forEach((isActive, index) => {
         if (isActive && index < frequencies.length) {
             const frequency = frequencies[index];
             
@@ -37,23 +38,20 @@ export const playSweep: TPlaySweep = ({
             osc.start(time + timeOffset);
             osc.stop(time + timeOffset + duration);
         }
+      });
     });
 };
 
-export function generatePeakFrequencies(): number[] {
-  const config = FFT_CONFIG
-  const { min, max } = config.frequencyRange;
-  const peakCount = config.peakCount;
+export function generatePeakFrequencies(rowIndex: number): number[] {
+  const { min, max } = bracketFrequencyRanges[rowIndex];
+  const { peakCount: totalPeaks, rowCount} = FFT_CONFIG;
+  const peakCount = totalPeaks / rowCount;
 
   const range = max - min;
   const linearSpacing = range / (peakCount - 1);
-  console.log(range, linearSpacing)
 
-  return Array.from({ length: peakCount }, (_, i) => {
-    const spacing = Math.round(min + (i * linearSpacing))
-    const startOfRow = i % 12 === 0 && i !== 0;
-    return !startOfRow ? spacing : spacing + 50;
-  }
+  return Array.from({ length: peakCount }, (_, i) => 
+    Math.round(min + (i * linearSpacing))
   );
 
 }
