@@ -15,7 +15,6 @@ export const playSweep: TPlaySweep = ({
 }) => {
     const frequencies = generatePeakFrequencies();
     const sineWave = createPureSineWave(audioCtx);
-    console.log("frequencies", frequencies);
     
     let timeOffset = 0;
     moveDirectionCallback();
@@ -48,6 +47,7 @@ export function generatePeakFrequencies(): number[] {
 
   const range = max - min;
   const linearSpacing = range / (peakCount - 1);
+  console.log(range, linearSpacing)
 
   return Array.from({ length: peakCount }, (_, i) => {
     const spacing = Math.round(min + (i * linearSpacing))

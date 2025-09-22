@@ -45,3 +45,11 @@ export const FFT_CONFIG = {
 }; 
   
 export const binResolution = FFT_CONFIG.sampleRate / FFT_CONFIG.fftSize; // ~5.38 Hz per bin
+
+export const bracketFrequencyRanges = [
+    { min: 2000, max: 6000 },
+    { min: 6000, max: 10000 },
+    { min: 10000, max: 14000 },
+    { min: 14000, max: 18000 },
+    { min: 18000, max: 22000 },
+]

@@ -26,9 +26,7 @@ export const makeSVGRows = ({
     const binsPerRow = Math.floor((endValue - startValue) / gameBoard.length);
     const maxFFTValue = Math.max(...fftData);
     const minFFTValue = Math.min(...fftData);
-    console.log("maxFFTValue, minFFTValue", maxFFTValue, minFFTValue);
     for(let i = 0; i < gameBoard.length; i++) {
-        console.log((i + 1) * binsPerRow, binsPerRow, i * binsPerRow);
         updateMakeSVGRowWithPeakDetection({ 
             yOffset,
             svgId,
