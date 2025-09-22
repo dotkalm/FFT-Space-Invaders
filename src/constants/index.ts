@@ -39,9 +39,9 @@ export enum END_VALUES {
 
 export const FFT_CONFIG = {
     sampleRate: 44100,
-    fftSize: 8192,
-    frequencyRange: { min: 100, max: 20000 }, // Avoid DC and very high frequencies
-    peakCount: 11 
+    fftSize: 2048,
+    frequencyRange: { min: 2000, max: 22000 }, // Avoid DC and very high frequencies
+    peakCount: 55
 }; 
   
 export const binResolution = FFT_CONFIG.sampleRate / FFT_CONFIG.fftSize; // ~5.38 Hz per bin

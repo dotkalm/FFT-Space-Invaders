@@ -7,13 +7,7 @@ export type TWaveMaker = (wavetable: TWaveTable, audioCtx: AudioContext) => Peri
 
 export type TPlaySweep = (params: TPlaySweepParams) => void;
 
-export type TGameBoard = [
-  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
-  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
-  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
-  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
-  [boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean],
-];
+export type TGameBoard = boolean[][];
 
 export interface TPlaySweepParams {
   audioCtx: AudioContext;
@@ -23,6 +17,9 @@ export interface TPlaySweepParams {
   oscillatorCount: number;
   time: number;
   waveTable: TWaveTable;
+  direction: "left" | "right";
+  frequencyOffset: number;
+  moveDirectionCallback: () => void;
 }
 
 export interface TConnectNewOscilatorArguments {

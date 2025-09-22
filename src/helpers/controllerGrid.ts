@@ -2,7 +2,6 @@ import type { TGameBoard } from "../types/index.js";
 
 export const updateControllerGrid = (gameboard: TGameBoard): void => {
     const gridContainer = document.getElementById("controller-grid");
-    console.log(gridContainer);
     if (!gridContainer) return;
 
     gridContainer.innerHTML = ""; // Clear previous cells

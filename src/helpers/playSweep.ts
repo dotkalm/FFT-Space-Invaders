@@ -8,19 +8,23 @@ import { INITIAL_VALUES, END_VALUES, SETTINGS, FFT_CONFIG, binResolution } from 
 export const playSweep: TPlaySweep = ({
   time, 
   audioCtx, 
-  waveTable, 
   duration, 
   gainNode, 
   gameBoard,
-  oscillatorCount,
+  moveDirectionCallback,
 }) => {
     const frequencies = generatePeakFrequencies(FFT_CONFIG);
     const sineWave = createPureSineWave(audioCtx);
-    
-    // Map game board positions to frequencies
-    const flatBoard = gameBoard.flat();
+    const flatBoard = gameBoard[gameBoard.length -1 ];
     
     let timeOffset = 0;
+    const firstTrue = flatBoard.indexOf(true);
+    const lastTrue = flatBoard.lastIndexOf(true);
+    const range = (lastTrue - firstTrue) + 1;
+    const lastTrueFrequency = frequencies[lastTrue];
+    const firstTrueFrequency = frequencies[firstTrue];
+    const frequencyRange = lastTrueFrequency - firstTrueFrequency;
+    moveDirectionCallback();
     flatBoard.forEach((isActive, index) => {
         if (isActive && index < frequencies.length) {
             const frequency = frequencies[index];
@@ -36,47 +40,23 @@ export const playSweep: TPlaySweep = ({
             
             osc.connect(peakGain);
             peakGain.connect(gainNode);
-            timeOffset += .001;
+            timeOffset += .01;
             osc.start(time + timeOffset);
             osc.stop(time + timeOffset + duration);
         }
     });
 };
 
-const connectNewOscillator: TConnectNewOscilator = ({ audioCtx, periodicWave, gainNode, frequency, time, duration }) => {
-  const osc = new OscillatorNode(audioCtx, {
-    frequency,
-    type: "custom",
-    periodicWave,
-  });
-  osc.connect(gainNode);
-  osc.start(time);
-  osc.stop(time + duration);
-}
-
-function generatePeakFrequencies(config: typeof FFT_CONFIG): number[] {
+export function generatePeakFrequencies(config: typeof FFT_CONFIG): number[] {
 
   const { min, max } = config.frequencyRange;
   const peakCount = config.peakCount;
 
-  // Option 1: Linear spacing with minimum separation
-  const minSeparation = binResolution * .2; // At least 3 bins apart
   const range = max - min;
   const linearSpacing = range / (peakCount - 1);
 
-  if (linearSpacing >= minSeparation) {
-    // Linear spacing works
-    return Array.from({ length: peakCount }, (_, i) =>
-      Math.round(min + (i * linearSpacing))
-    );
-  }
-
-  // Option 2: Logarithmic spacing (better for audio)
-  const logMin = Math.log10(min);
-  const logMax = Math.log10(max);
-  const logStep = (logMax - logMin) / (peakCount - 1);
-
   return Array.from({ length: peakCount }, (_, i) =>
-    Math.round(Math.pow(10, logMin + (i * logStep)))
+    Math.round(min + (i * linearSpacing))
   );
+
 }

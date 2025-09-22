@@ -10,6 +10,7 @@ import {
     PLAY_STATE,
     PLAY_STATE_LABEL,
     SETTINGS,
+    FFT_CONFIG,
 } from './constants/index.js';
 
 let gameBoard = new Array(5).fill(new Array(11).fill(true)) as TGameBoard;
@@ -23,6 +24,22 @@ let oscillatorCount: number = INITIAL_VALUES.OSCILLATOR_COUNT;
 let playing: boolean;
 let lastFFTData: string = '';
 let svgId: number = 0;
+let direction: "left" | "right" = "right";
+
+function moveDirectionCallback(): void {
+    const leftTrue = [];
+    const rightTrue = [];
+    for (let i = 0; i < gameBoard.length; i++) {
+        const currentRow = gameBoard[i];
+        const firstTrue = currentRow.indexOf(true);
+        const lastTrue = currentRow.lastIndexOf(true);
+        leftTrue.push(firstTrue);
+        rightTrue.push(lastTrue);
+    }
+    const range = (Math.max(...rightTrue) - Math.min(...leftTrue)) + 1;
+    //console.log(Math.min(...leftTrue), Math.max(...rightTrue), gameBoard, leftTrue, rightTrue);
+    direction = direction === "left" ? "right" : "left";
+};
 
 const gameSetup = (): TCurrentGame => {
     gameStarted = true;
@@ -30,7 +47,7 @@ const gameSetup = (): TCurrentGame => {
     stateButton.textContent = PLAY_STATE_LABEL.PAUSE;
     const audioContext: AudioContext = new AudioContext();
     const analyser = audioContext.createAnalyser();
-    analyser.fftSize = INITIAL_VALUES.BIN_COUNT;
+    analyser.fftSize = FFT_CONFIG.fftSize;
     const gainNode: GainNode = audioContext.createGain();
     gainNode.gain.value = SETTINGS.GAIN_VALUE;
     gainNode.connect(audioContext.destination);
@@ -93,6 +110,9 @@ function step(): void {
             oscillatorCount,
             time: audioContext.currentTime,
             waveTable: pulse,
+            moveDirectionCallback,
+            direction,
+            frequencyOffset: 0,
         });
     }
     analyser.getByteFrequencyData(fftData);
@@ -126,10 +146,14 @@ gridContainer.addEventListener("click", (e) => {
     const [, rowStr, colStr] = target.id.split("-");
     const rowIndex = Number(rowStr);
     const colIndex = Number(colStr);
-
     if (isNaN(rowIndex) || isNaN(colIndex)) return;
 
-    gameBoard[rowIndex][colIndex] = !gameBoard[rowIndex][colIndex];
+    const currentRow = [...gameBoard[rowIndex]];
+    currentRow[colIndex] = !currentRow[colIndex];
+    console.log({currentRow});
+    gameBoard[rowIndex] = currentRow;
+    // gameBoard[rowIndex][colIndex] = !gameBoard[rowIndex][colIndex];
+    gameBoard.forEach((row) => console.log(row))
     // Toggle background color
     if (target.style.backgroundColor === "green") {
         target.style.backgroundColor = "white";
