@@ -20,17 +20,28 @@ export enum SETTINGS {
   OSCILLATOR_DURATION = 0.1,
   ROWS = 5,
   PIXEL_WIDTH = 800,
+  SAMPLE_RATE = 44100,
+  FFT_SIZE = 8192,
 }
 
 export enum INITIAL_VALUES {
   INTERVAL = 120,
   OSCILLATOR_COUNT = 55,
   ROWS = 5,
-  FREQUENCY_RANGE = 8000,
-  BIN_COUNT = 256,
+  FREQUENCY_RANGE = 24000,
+  BIN_COUNT = 512,
 }
 
 export enum END_VALUES {
   FREQUENCY_RANGE = 24000,
   BIN_COUNT = 2048,
 }
+
+export const FFT_CONFIG = {
+    sampleRate: 44100,
+    fftSize: 8192,
+    frequencyRange: { min: 100, max: 20000 }, // Avoid DC and very high frequencies
+    peakCount: 11 
+}; 
+  
+export const binResolution = FFT_CONFIG.sampleRate / FFT_CONFIG.fftSize; // ~5.38 Hz per bin

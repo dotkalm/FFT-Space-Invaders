@@ -9,7 +9,6 @@ export const updateControllerGrid = (gameboard: TGameBoard): void => {
 
     gameboard.forEach((row, rowIndex) => {
         row.forEach((cell, colIndex) => {
-            console.log(rowIndex, colIndex, cell);
             const cellDiv = document.createElement("div");
             cellDiv.style.gridRow = (rowIndex + 1).toString();
             cellDiv.style.gridColumn = (colIndex + 1).toString();
