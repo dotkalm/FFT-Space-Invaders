@@ -643,6 +643,7 @@ function updateControllerGrid (gameboard: TGameBoard): void {
             cellDiv.style.width = "40px";
             cellDiv.style.height = "40px";
             cellDiv.style.boxSizing = "border-box";
+            cellDiv.style.border = `1px solid ${DEBUGGER_SETTINGS.CONTROLLER_CELL_COLOR_INACTIVE}`;
             cellDiv.setAttribute("id", `cell-${rowIndex}-${colIndex}`);
             if (cell) {
                 cellDiv.style.backgroundColor = DEBUGGER_SETTINGS.CONTROLLER_CELL_COLOR_ACTIVE;
