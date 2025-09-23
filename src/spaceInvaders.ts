@@ -17,6 +17,8 @@ FFT analysis is used to detect the peak in the signal
 The signal's peak indicates the player's position on screen
 right and left arrows or h and l keys increase and decrease the frequency, which moves the player left and right on screen 
 
+the invader x position can be determined by: invaderStepWidth + InvaderStartPositionX
+
 a debugger is available by pressing the d key
 the debugger shows a grid representing the game board to test hitting specific invaders
 the debugger also shows the frequency and bin number for each invader and the player
@@ -30,7 +32,6 @@ interface TSetup {
 };
 
 type TGameBoard = boolean[][];
-type TMhzValuesPerInvader = number[][];
 
 interface TBracketFrequencyRange {
     min: number;
@@ -115,7 +116,7 @@ enum SETTINGS {
     // PLAYER SETTINGS
     PLAYER_GAIN_MULTIPLIER = 4,
     PLAYER_LINE_COLOR = 'white',
-    PLAYER_LINE_WIDTH = 0.1,
+    PLAYER_LINE_WIDTH = 1,
     PLAYER_MARKER_RADIUS = 0.5,
     PLAYER_POSITION_ID = 'player-position',
     PLAYER_START_POSITION_X = 0,
@@ -156,7 +157,8 @@ enum ROLE {
 const bracketFrequencyRanges = [...initialBracketFrequencyRanges];
 const gameBoard = new Array(SETTINGS.ROW_COUNT).fill(new Array(SETTINGS.PEAK_COUNT / SETTINGS.ROW_COUNT).fill(true)) as TGameBoard;
 const invaderSVGPath = "M469.344,266.664v-85.328h-42.656v-42.672H384v-21.328h42.688v-64h-64v42.656H320v42.672H192V95.992  h-42.656V53.336h-64v64H128v21.328H85.344v42.672H42.688v85.328H0v149.328h64v-85.328h21.344v85.328H128v42.672h106.688v-64h-85.344  v-21.328h213.344v21.328h-85.344v64H384v-42.672h42.688v-85.328H448v85.328h64V266.664H469.344z M192,245.336h-64v-64h64V245.336z   M384,245.336h-64v-64h64V245.336z";
-const mhzValues = new Array(SETTINGS.ROW_COUNT).fill(new Array(SETTINGS.PEAK_COUNT / SETTINGS.ROW_COUNT).fill(0)) as TMhzValuesPerInvader;
+const mhzValues = new Array(SETTINGS.ROW_COUNT).fill(new Array(SETTINGS.PEAK_COUNT / SETTINGS.ROW_COUNT).fill(0)) as number[][];
+const invaderXValues = new Array(SETTINGS.ROW_COUNT).fill(new Array(SETTINGS.PEAK_COUNT / SETTINGS.ROW_COUNT).fill(0)) as number[][];
 
 let animationId: number;
 let currentGame: TSetup | null = null;
@@ -179,6 +181,7 @@ let svgId: number = 0;
 let playerSvgId: number = 0;
 let xOffset: number = 0;
 let yOffset: number = 0;
+let invaderStepWidth = 0;
 
 const setup = (): TSetup => {
     const audioContext: AudioContext = new AudioContext();
@@ -304,7 +307,7 @@ export const paintRowOfInvaders = ({
     const topOfLine = `${yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT) + (minFFTValue + 60)/2}`;
     let path = `M ${SETTINGS.INVADER_ROW_HEIGHT} ${topOfLine}`; // Starting point
     let x = SETTINGS.INVADER_START_ROW_POSITION_X + xOffset;
-    const stepWidth = Number((SETTINGS.PIXEL_WIDTH / binsPerRow).toFixed(2));
+    invaderStepWidth = Number((SETTINGS.PIXEL_WIDTH / binsPerRow).toFixed(2));
 
     // Remove peaks from last animation frame before drawing new ones
     const allPeaks = document.getElementsByClassName(`peak-${svgId-1}-row-${rowIndex}`);
@@ -318,12 +321,12 @@ export const paintRowOfInvaders = ({
     for(let i = binStartIndex; i < binEndIndex; i++) {
         // is this bin a peak?
         const diffFromMax = Math.abs(maxFFTValue - fftData[i+2]);
-        x += stepWidth;
+        x += invaderStepWidth;
         const y = (yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)) + (fftData[i+2] / 2);
         path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
 
         // is this a peak
-        const displacedOnYAxis = diffFromMax > SETTINGS.INVADER_PEAK_DISPLACEMENT_THRESHOLD_Y ;
+        const displacedOnYAxis = diffFromMax < SETTINGS.INVADER_PEAK_DISPLACEMENT_THRESHOLD_Y ;
         // is this peak too close to the last invader?
         const displacedOnXAxis = !lastPeakDetected || Math.abs(x - lastPeakDetected) > SETTINGS.INVADER_PEAK_DISPLACEMENT_THRESHOLD_X ;
         // is this a valid cell on the gameboard
@@ -338,11 +341,21 @@ export const paintRowOfInvaders = ({
             });
             if(debuggerOn) addTextToSVGGroup(group, `bin ${i}`, Number(x.toFixed(2))-10, yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)+70);
             if(debuggerOn) addTextToSVGGroup(group, `${mhzValues[rowIndex][peakNumber]}mhz`, Number(x.toFixed(2))-10, yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)+85);
-            peakNumber++;
+            if(debuggerOn) addTextToSVGGroup(group, `x: ${Number(x.toFixed(2))}`, Number(x.toFixed(2))-10, yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)+100);
+            invaderXValues[rowIndex][peakNumber] = Number(x.toFixed(2));
+            peakNumber++; // track gameboard cell index
         }
     }
-    x += stepWidth;
+    x += invaderStepWidth;
     path = `${path} L${x.toFixed(2)} ${topOfLine}`;
+    if(debuggerOn){
+        const newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        newPath.setAttribute("d", path);
+        newPath.setAttribute("stroke", "yellow");
+        newPath.setAttribute("stroke-width", "1");
+        newPath.setAttribute("fill", "none");
+        group.appendChild(newPath);
+    }
 
     group.setAttribute("id", `group-${svgId}-row-${rowIndex}`);
     document.getElementById("gameBoard")?.appendChild(group);
@@ -355,7 +368,7 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
     const newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     let path = `M ${SETTINGS.PLAYER_START_POSITION_X} ${SETTINGS.PIXEL_WIDTH}`; // Starting point
     let x = 0;
-    const stepWidth = Number((SETTINGS.PIXEL_WIDTH / fftData.length).toFixed(2));
+    const playerStepWidth = Number((SETTINGS.PIXEL_WIDTH / fftData.length).toFixed(2));
     const previousPlayer = document.getElementsByClassName(`player-${playerSvgId-1}`);
     while(previousPlayer[0]) {
         previousPlayer[0].parentNode?.removeChild(previousPlayer[0]);
@@ -364,7 +377,7 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
     let peakY: number = maxFFTValue / 2;
     let peakX: number = 0;
     for (let i = 0; i < fftData.length; i++) {
-        x += stepWidth;
+        x += playerStepWidth;
         const y = (SETTINGS.PIXEL_WIDTH) - (fftData[i] / 2);
         path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
 
@@ -380,6 +393,7 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
             group.appendChild(circle);
             peakX = Number(x.toFixed(2));
             peakY = y;
+            if (debuggerOn) addTextToSVGGroup(group, `x position ${peakX}`, peakX, y - 25);
             if (debuggerOn) addTextToSVGGroup(group, `player ${playerFrequency}mhz`, peakX, y - 10);
             if (debuggerOn) addTextToSVGGroup(group, `bin ${i}`, peakX, y + 5);
         }
@@ -394,7 +408,7 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
     const playerPositionRect = playerPosition?.getBoundingClientRect();
     const { x: currentPlayerViewportX } = playerPositionRect!;
     playerViewportX = currentPlayerViewportX;
-    if (debuggerOn) addTextToSVGGroup(group, `viewport position: ${playerViewportX.toFixed(2)}`, peakX, peakY + 15);
+    if (debuggerOn) addTextToSVGGroup(group, `viewport position x: ${playerViewportX.toFixed(2)}`, peakX, peakY + 15);
 };
 const makeGameBoard = ({
     fftData, 
