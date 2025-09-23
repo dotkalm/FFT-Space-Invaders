@@ -301,8 +301,8 @@ export const paintRowOfInvaders = ({
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const className = `peak-${svgId}-row-${rowIndex}`;
     group.setAttribute("class", className);
-    // const topOfLine = `${yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT) + (minFFTValue + 60)/2}`;
-    // let path = `M ${SETTINGS.INVADER_ROW_HEIGHT} ${topOfLine}`; // Starting point
+    const topOfLine = `${yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT) + (minFFTValue + 60)/2}`;
+    let path = `M ${SETTINGS.INVADER_ROW_HEIGHT} ${topOfLine}`; // Starting point
     let x = SETTINGS.INVADER_START_ROW_POSITION_X + xOffset;
     const stepWidth = Number((SETTINGS.PIXEL_WIDTH / binsPerRow).toFixed(2));
 
@@ -320,7 +320,7 @@ export const paintRowOfInvaders = ({
         const diffFromMax = Math.abs(maxFFTValue - fftData[i+2]);
         x += stepWidth;
         const y = (yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)) + (fftData[i+2] / 2);
-        // path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
+        path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
 
         // is this a peak
         const displacedOnYAxis = diffFromMax > SETTINGS.INVADER_PEAK_DISPLACEMENT_THRESHOLD_Y ;
@@ -342,7 +342,7 @@ export const paintRowOfInvaders = ({
         }
     }
     x += stepWidth;
-    // path = `${path} L${x.toFixed(2)} ${topOfLine}`;
+    path = `${path} L${x.toFixed(2)} ${topOfLine}`;
 
     group.setAttribute("id", `group-${svgId}-row-${rowIndex}`);
     document.getElementById("gameBoard")?.appendChild(group);
@@ -549,8 +549,8 @@ function createSineWave(audioContext: AudioContext): PeriodicWave {
 }
 
 function connectAnalyzer(role: ROLE): void {
-    const currentContext = role === ROLE.GAMEBOARD ? currentGame : player;
-    const { analyzer, audioContext, gainNode } = currentContext!;
+    const currentRole = role === ROLE.GAMEBOARD ? currentGame : player;
+    const { analyzer, audioContext, gainNode } = currentRole!;
     gainNode.disconnect();
     gainNode.connect(analyzer);
     analyzer.connect(audioContext.destination);
