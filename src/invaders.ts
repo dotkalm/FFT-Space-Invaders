@@ -25,7 +25,6 @@ let lastFFTData: string = '';
 let svgId: number = 0;
 let direction: "left" | "right" = "right";
 let xOffset: number = 0;
-let xFrequencyOffset: number = 0;
 const bracketFrequencyRanges = [...initialBracketFrequencyRanges];
 
 const gameSetup = (): TCurrentGame => {
@@ -88,7 +87,6 @@ function step(): void {
     const currentTime = performance.now();
     const runSweep = currentTime - lastTimeOscillator >= INITIAL_VALUES.INTERVAL;
     moveDirectionXTransform();
-    //moveDirection();
     if (runSweep) {
         lastTimeOscillator = currentTime;
         playSweep({

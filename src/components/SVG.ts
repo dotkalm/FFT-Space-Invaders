@@ -7,8 +7,10 @@ type TMakeRowParams = {
     fftData: number[];
     rowIndex: number;
     yOffset: number;
-    svgId: number;
     xOffset: number;
+    svgId: number;
+    maxFFTValue: number;
+    minFFTValue: number;
 }
 type TmakeSvgRowsParams = {
     fftData: number[];
@@ -45,7 +47,7 @@ export const makeSVGRows = ({
     }
 };
 
-export const updateMakeSVGRowWithPeakDetection = ({ 
+export const updateMakeSVGRowWithPeakDetection = ({
     binEndIndex,
     binStartIndex,
     binsPerRow,
@@ -56,18 +58,7 @@ export const updateMakeSVGRowWithPeakDetection = ({
     svgId,
     maxFFTValue,
     minFFTValue,
-}: {
-    binEndIndex: number;
-    binStartIndex: number;
-    binsPerRow: number;
-    fftData: number[];
-    rowIndex: number;
-    yOffset: number;
-    xOffset: number;
-    svgId: number;
-    maxFFTValue: number;
-    minFFTValue: number;
-}) => {
+}: TMakeRowParams): void => {
     // Your existing path drawing code...
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const className = `peak-${svgId}-row-${rowIndex}`;

@@ -1,9 +1,8 @@
 import { 
     type TPlaySweep,
-    type TConnectNewOscilator,
 } from "../types";
 import { createPureSineWave } from "../helpers/index.js";
-import { FFT_CONFIG,  } from "../constants/index.js";
+import { FFT_CONFIG } from "../constants/index.js";
 
 export const playSweep: TPlaySweep = ({
   audioCtx, 
@@ -52,5 +51,4 @@ export function generatePeakFrequencies(rowIndex: number, bracketFrequencyRanges
   return Array.from({ length: peakCount }, (_, i) => 
     Math.round(min + (i * linearSpacing))
   );
-
 }
