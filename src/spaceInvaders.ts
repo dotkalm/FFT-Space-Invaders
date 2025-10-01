@@ -250,7 +250,7 @@ const playTones: TPaintInvaders = ({
 
       row.forEach((isActive, index) => { // iterate over each cell in the row
 
-        if(newJson !== previousGameBoard){
+        if(newJson !== previousGameBoard && !isActive){
             console.log({rowIndex, colIndex: index, isActive})
         }
         if (isActive && index < frequencies.length) { // only create oscillator if the alien in that cell has not been "hit" 
@@ -368,8 +368,9 @@ function getElementsFromPoint(x: number, y: number): void | { row: number; colum
             const [ , rowString, columnString ] = element.getAttribute('id')!.split('-');
             const row = Number(rowString);
             const column = Number(columnString);
-            console.log(element.id)
+            console.log(element.id, element.parentNode)
             element.parentNode?.removeChild(element);
+            element.parentElement?.removeChild(element);
             return {
                 row,
                 column
@@ -410,16 +411,14 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
                     const { column, row } = laserHit as { row: number; column: number };
                     console.log({column, row});
                     const newRow = [...gameBoard[row]];
-                    console.log(newRow);
                     newRow[column] = false;
                     gameBoard[row] = newRow;
-                    gameBoard.forEach((r, i) => console.log(i, r));
 
 
                     currentlyFiring = false;
                     laserBeginTime = undefined;
                     laserYOffset = 0;
-                    updateControllerGrid(gameBoard);
+                    // updateControllerGrid([...gameBoard]);
                 }else{
                     line.setAttribute("x1", `${x.toFixed(2)}`);
                     line.setAttribute("y1", `${laserBottom}`);
