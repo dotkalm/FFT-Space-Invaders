@@ -107,12 +107,14 @@ enum SETTINGS {
     PIXEL_WIDTH = 800, // game board width in pixels
     ROW_COUNT = 5, // number of rows of invaders
     TIME_OFFSET_PER_OSCILLATOR = 0.001, // offset each oscillator by this amount to avoid all starting at the same time
+    // Laser settings
+    LASER_DURATION = 500, // duration of laser firing in ms
 };
 
 enum DEBUGGER_SETTINGS {
     CONTROLLER_GRID_ID = 'controller-grid',
-    CONTROLLER_CELL_COLOR_INACTIVE = 'white',
-    CONTROLLER_CELL_COLOR_ACTIVE = 'green',
+    CONTROLLER_CELL_COLOR_INACTIVE = 'none',
+    CONTROLLER_CELL_COLOR_ACTIVE = 'none',
 }
 
 enum CONTROLS {
@@ -136,7 +138,7 @@ const invaderXValues = new Array(SETTINGS.ROW_COUNT).fill(new Array(SETTINGS.PEA
 
 let animationId: number;
 let currentGame: TSetup | null = null;
-let debuggerOn: boolean = false;
+let debuggerOn: boolean = true;
 let direction: DIRECTION = DIRECTION.RIGHT;
 let fftData: Uint8Array<ArrayBuffer>;
 let playerFftData: Uint8Array<ArrayBuffer>;
@@ -156,6 +158,11 @@ let playerSvgId: number = 0;
 let xOffset: number = 0;
 let yOffset: number = 0;
 let invaderStepWidth = 0;
+let beginFire = false;
+let currentlyFiring = false;
+let laserBeginTime: undefined | number = undefined;
+let laserYOffset = 0;
+let previousGameBoard: string = JSON.stringify(gameBoard);
 
 const setup = (): TSetup => {
     const audioContext: AudioContext = new AudioContext();
@@ -172,6 +179,8 @@ const setup = (): TSetup => {
 };
 
 const startGame = (): void => {
+    const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
+    gridContainer.style.visibility = "visible";
     gameStarted = true;
     const stateButton = window.document.getElementById(SETTINGS.BUTTON_ID);
     stateButton.textContent = PLAY_STATE_LABEL.PAUSE;
@@ -232,6 +241,7 @@ const playTones: TPaintInvaders = ({
     const sineWave = createSineWave(audioCtx); // most basic sine wave possible
     
     let timeOffset = 0; // slight offset to avoid all oscillators starting at the exact same time
+    const newJson = JSON.stringify(gameBoard);
 
     gameBoard.forEach((row, rowIndex) => { // iterate over each row in the game board
 
@@ -240,6 +250,9 @@ const playTones: TPaintInvaders = ({
 
       row.forEach((isActive, index) => { // iterate over each cell in the row
 
+        if(newJson !== previousGameBoard){
+            console.log({rowIndex, colIndex: index, isActive})
+        }
         if (isActive && index < frequencies.length) { // only create oscillator if the alien in that cell has not been "hit" 
 
             const frequency = frequencies[index]; // get the frequency for this specific cell
@@ -260,6 +273,8 @@ const playTones: TPaintInvaders = ({
         }
       });
     });
+    previousGameBoard = newJson;
+
 };
 
 export const paintRowOfInvaders = ({
@@ -281,6 +296,9 @@ export const paintRowOfInvaders = ({
     const topOfLine = `${yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT) + (minFFTValue + 60)/2}`;
     let path = `M ${SETTINGS.INVADER_ROW_HEIGHT} ${topOfLine}`; // Starting point
     let x = SETTINGS.INVADER_START_ROW_POSITION_X + xOffset;
+    const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
+    gridContainer.style.transform = `translateX(${xOffset * .585}px)`;
+    gridContainer.style.transform = `translate(${xOffset * .585}px, ${yOffset}px)`;
     invaderStepWidth = Number((SETTINGS.PIXEL_WIDTH / binsPerRow).toFixed(2));
 
     // Remove peaks from last animation frame before drawing new ones
@@ -335,6 +353,30 @@ export const paintRowOfInvaders = ({
     document.getElementById("gameBoard")?.appendChild(group);
 };
 
+function fireLaser(fireX: number, fireY: number): void {
+    if (beginFire) beginFire = false;
+    console.log('firing, x:', fireX, 'y:', fireY);
+};
+
+function getElementsFromPoint(x: number, y: number): void | { row: number; column: number } {
+    const elements = document.elementsFromPoint(x, y);
+    // console.log('elements from point', elements);
+    const cellsInColumn: Element[] = [];
+    for (const element of elements) {
+        if(element.getAttribute('id')?.startsWith('cell-')){
+            cellsInColumn.push(element);
+            const [ , rowString, columnString ] = element.getAttribute('id')!.split('-');
+            const row = Number(rowString);
+            const column = Number(columnString);
+            console.log(element.id)
+            element.parentNode?.removeChild(element);
+            return {
+                row,
+                column
+            }
+        }
+    }
+}
 const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const className = `player-${playerSvgId}`;
@@ -356,6 +398,38 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
         path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
 
         if (fftData[i] === maxFFTValue) {
+            if(currentlyFiring){
+                fireLaser(x, y);
+            }
+            if(laserBeginTime !== undefined){
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                const laserTop = Number(y.toFixed(2)) - 100 - laserYOffset;
+                const laserBottom = Number(y.toFixed(2)) - laserYOffset;
+                const laserHit = getElementsFromPoint(x, laserTop);
+                if(laserHit !== undefined){
+                    const { column, row } = laserHit as { row: number; column: number };
+                    console.log({column, row});
+                    const newRow = [...gameBoard[row]];
+                    console.log(newRow);
+                    newRow[column] = false;
+                    gameBoard[row] = newRow;
+                    gameBoard.forEach((r, i) => console.log(i, r));
+
+
+                    currentlyFiring = false;
+                    laserBeginTime = undefined;
+                    laserYOffset = 0;
+                    updateControllerGrid(gameBoard);
+                }else{
+                    line.setAttribute("x1", `${x.toFixed(2)}`);
+                    line.setAttribute("y1", `${laserBottom}`);
+                    line.setAttribute("x2", `${x.toFixed(2)}`);
+                    line.setAttribute("y2", `${laserTop}`);
+                    line.setAttribute("stroke", "red");
+                    line.setAttribute("stroke-width", "10");
+                    group.appendChild(line);
+                }
+            }
             // create marker so that we can find the player position in the viewport
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', `${x.toFixed(2)}`); 
@@ -461,9 +535,22 @@ function step(): void {
     }
 
     // has the player's fft data changed since last frame?
+
     if(JSON.stringify([...playerFftData]) !== lastPlayerFFTData) {
         playerSvgId += 1; // track player animation frames
         // rerun oscillator sweeps for player
+        if(beginFire && currentlyFiring && laserBeginTime === undefined) {
+            laserBeginTime = performance.now();
+        }
+        if(laserBeginTime !== undefined){
+            laserYOffset += 20;
+            const laserTimeElapsed = currentTime - laserBeginTime >= SETTINGS.LASER_DURATION;
+            if(laserTimeElapsed){
+                currentlyFiring = false;
+                laserBeginTime = undefined;
+                laserYOffset = 0;
+            }
+        }
         paintPlayerPosition({ 
             fftData: [...playerFftData],
         });
@@ -617,7 +704,9 @@ function updateControllerGrid (gameboard: TGameBoard): void {
             cellDiv.style.width = "40px";
             cellDiv.style.height = "40px";
             cellDiv.style.boxSizing = "border-box";
-            cellDiv.style.border = `1px solid ${DEBUGGER_SETTINGS.CONTROLLER_CELL_COLOR_INACTIVE}`;
+            cellDiv.style.border = 'red';
+            cellDiv.style.borderStyle = 'solid';
+            cellDiv.style.borderWidth = '2px';
             cellDiv.setAttribute("id", `cell-${rowIndex}-${colIndex}`);
             if (cell) {
                 cellDiv.style.backgroundColor = DEBUGGER_SETTINGS.CONTROLLER_CELL_COLOR_ACTIVE;
@@ -645,11 +734,7 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'd') {
     debuggerOn = !debuggerOn;
     const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
-    if(debuggerOn) {
-        gridContainer.style.visibility = "visible";
-    }else{
-        gridContainer.style.visibility = "hidden";
-    }
+    gridContainer.style.visibility = "visible";
   }
   if( event.key === CONTROLS.VIM_RIGHT || event.key === CONTROLS.RIGHT) {
     if(playerPosition >= SETTINGS.PIXEL_WIDTH) return;
@@ -664,5 +749,11 @@ document.addEventListener('keydown', (event) => {
     if(currentState === PLAY_STATE.STOPPED) {
         startGame();
     }
+  }
+  if( event.key === ' ') {
+      if (!currentlyFiring) {
+          beginFire = true;
+          currentlyFiring = true;
+      }
   }
 });

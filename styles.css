@@ -1,9 +1,12 @@
 #controller-grid {
     position: absolute;
-    bottom: 40px;
     display: grid;
     grid-template-rows: repeat(5, 1fr);
     grid-template-columns: repeat(11, 1fr);
+    top: 30px;
+    height: 300px;
+    width: 460px;
+    left: 180px;
 }
 svg {
     position: absolute;
