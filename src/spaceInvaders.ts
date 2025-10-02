@@ -86,7 +86,7 @@ enum SETTINGS {
     INVADER_START_ROW_POSITION_X = 100,
     INVADER_WIDTH = 50,
     INVADER_X_MOVEMENT = 0.08,
-    INVADER_Y_MOVEMENT = 0.005,
+    INVADER_Y_MOVEMENT = 0.05,
     // PLAYER SETTINGS
     PLAYER_GAIN_MULTIPLIER = 4,
     PLAYER_LINE_COLOR = 'white',
@@ -106,7 +106,7 @@ enum SETTINGS {
     PEAK_COUNT = 55, // total number of invaders on game board
     PIXEL_WIDTH = 800, // game board width in pixels
     ROW_COUNT = 5, // number of rows of invaders
-    TIME_OFFSET_PER_OSCILLATOR = 0.001, // offset each oscillator by this amount to avoid all starting at the same time
+    TIME_OFFSET_PER_OSCILLATOR = 0, // offset each oscillator by this amount to avoid all starting at the same time
     // Laser settings
     LASER_DURATION = 500, // duration of laser firing in ms
 };
@@ -138,7 +138,7 @@ const invaderXValues = new Array(SETTINGS.ROW_COUNT).fill(new Array(SETTINGS.PEA
 
 let animationId: number;
 let currentGame: TSetup | null = null;
-let debuggerOn: boolean = true;
+let debuggerOn: boolean = false;
 let direction: DIRECTION = DIRECTION.RIGHT;
 let fftData: Uint8Array<ArrayBuffer>;
 let playerFftData: Uint8Array<ArrayBuffer>;
@@ -162,7 +162,11 @@ let beginFire = false;
 let currentlyFiring = false;
 let laserBeginTime: undefined | number = undefined;
 let laserYOffset = 0;
-let previousGameBoard: string = JSON.stringify(gameBoard);
+let gameOver = false;
+let playerY = 0;
+let invaderHitRow: number | undefined = undefined;
+let invaderHitColumn: number | undefined = undefined;
+let invaderElement: Element | undefined = undefined;
 
 const setup = (): TSetup => {
     const audioContext: AudioContext = new AudioContext();
@@ -204,6 +208,11 @@ const startGame = (): void => {
     updateControllerGrid(gameBoard);
 };
 
+const endGame = (): void => {
+    if(animationId) cancelAnimationFrame(animationId); 
+    playing = !playing;
+};
+
 const generatePlayerFrequency: TGeneratePlayerFrequency = ({
   audioCtx, 
   bracketFrequencyRanges,
@@ -240,8 +249,10 @@ const playTones: TPaintInvaders = ({
 }) => {
     const sineWave = createSineWave(audioCtx); // most basic sine wave possible
     
-    let timeOffset = 0; // slight offset to avoid all oscillators starting at the exact same time
     const newJson = JSON.stringify(gameBoard);
+
+    const gameOver = gameBoard.flat().every(cell => !cell);
+    gameOver && endGame();
 
     gameBoard.forEach((row, rowIndex) => { // iterate over each row in the game board
 
@@ -250,9 +261,6 @@ const playTones: TPaintInvaders = ({
 
       row.forEach((isActive, index) => { // iterate over each cell in the row
 
-        if(newJson !== previousGameBoard && !isActive){
-            console.log({rowIndex, colIndex: index, isActive})
-        }
         if (isActive && index < frequencies.length) { // only create oscillator if the alien in that cell has not been "hit" 
 
             const frequency = frequencies[index]; // get the frequency for this specific cell
@@ -267,13 +275,11 @@ const playTones: TPaintInvaders = ({
             
             osc.connect(peakGain);
             peakGain.connect(gainNode);
-            timeOffset += SETTINGS.TIME_OFFSET_PER_OSCILLATOR;
-            osc.start(time + timeOffset);
-            osc.stop(time + timeOffset + duration);
+            osc.start(time);
+            osc.stop(time + duration);
         }
       });
     });
-    previousGameBoard = newJson;
 
 };
 
@@ -297,8 +303,7 @@ export const paintRowOfInvaders = ({
     let path = `M ${SETTINGS.INVADER_ROW_HEIGHT} ${topOfLine}`; // Starting point
     let x = SETTINGS.INVADER_START_ROW_POSITION_X + xOffset;
     const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
-    gridContainer.style.transform = `translateX(${xOffset * .585}px)`;
-    gridContainer.style.transform = `translate(${xOffset * .585}px, ${yOffset}px)`;
+    gridContainer.style.transform = `translate(${xOffset * .585}px, ${yOffset * .585}px)`;
     invaderStepWidth = Number((SETTINGS.PIXEL_WIDTH / binsPerRow).toFixed(2));
 
     // Remove peaks from last animation frame before drawing new ones
@@ -326,8 +331,9 @@ export const paintRowOfInvaders = ({
 
         // paint invader if a peak is detected and it is not too close to the last invader and if the gameboard cell exists
         if(displacedOnYAxis && displacedOnXAxis && correspondsToGameboard !== undefined){
+            const isActive = gameBoard[rowIndex][peakNumber];
             lastPeakDetected = x;
-            paintInvaderOnPeak(Number(x.toFixed(2)), yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT), className, group, {
+            isActive && paintInvaderOnPeak(Number(x.toFixed(2)), yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT), className, group, {
                 row: rowIndex,
                 column: peakNumber,
             });
@@ -353,11 +359,6 @@ export const paintRowOfInvaders = ({
     document.getElementById("gameBoard")?.appendChild(group);
 };
 
-function fireLaser(fireX: number, fireY: number): void {
-    if (beginFire) beginFire = false;
-    console.log('firing, x:', fireX, 'y:', fireY);
-};
-
 function getElementsFromPoint(x: number, y: number): void | { row: number; column: number } {
     const elements = document.elementsFromPoint(x, y);
     // console.log('elements from point', elements);
@@ -368,14 +369,64 @@ function getElementsFromPoint(x: number, y: number): void | { row: number; colum
             const [ , rowString, columnString ] = element.getAttribute('id')!.split('-');
             const row = Number(rowString);
             const column = Number(columnString);
-            console.log(element.id, element.parentNode)
-            element.parentNode?.removeChild(element);
-            element.parentElement?.removeChild(element);
             return {
                 row,
                 column
             }
         }
+    }
+}
+
+const addTextToDiv = (text: string, container: HTMLElement): void => {
+    const previousText = container.getElementsByClassName("hit-text");
+    while(previousText[0]) {
+        previousText[0].parentNode?.removeChild(previousText[0]);
+    }
+    const div = document.createElement("div");
+    div.setAttribute("class", "hit-text");
+    div.textContent = text;
+    container.appendChild(div);
+};
+
+function lookAtAllOfThePaths(x: number){
+    const numbers = new Array(20).fill(0).map((_, i) => {
+        return SETTINGS.PIXEL_WIDTH - (i * 50);
+    });
+    for (const number of numbers) {
+        const elements = getElementsFromPoint(x, number);
+        if(elements !== undefined){
+            const { column } = elements as { row: number; column: number };
+            for ( let i = gameBoard.length - 1; i >= 0; i--) {
+                if(gameBoard[i][column] === true){
+                    if(invaderHitColumn === undefined && invaderHitRow === undefined){
+                        invaderElement = document.getElementById(`invader-row-${i}-column-${column}`);
+                        invaderHitRow = i;
+                        invaderHitColumn = column;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function removeInvader(){
+    try {
+        if (invaderElement !== undefined || invaderElement !== null) {
+            addTextToDiv(`Hit! row ${invaderHitRow + 1} column ${invaderHitColumn + 1}`, document.getElementById("hit-dialog")!);
+
+            const newRow = [...gameBoard[invaderHitRow]];
+            newRow[invaderHitColumn] = false;
+            gameBoard[invaderHitRow] = newRow;
+            currentlyFiring = false;
+            laserBeginTime = undefined;
+            laserYOffset = 0;
+            invaderHitRow = undefined;
+            invaderHitColumn = undefined;
+            invaderElement.parentNode?.removeChild(invaderElement);
+            invaderElement = undefined;
+        }
+    } catch (e) {
+        console.log(e);
     }
 }
 const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
@@ -399,25 +450,29 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
         path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
 
         if (fftData[i] === maxFFTValue) {
-            if(currentlyFiring){
-                fireLaser(x, y);
+            if(currentlyFiring && beginFire){
+                beginFire = false;
             }
             if(laserBeginTime !== undefined){
                 const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 const laserTop = Number(y.toFixed(2)) - 100 - laserYOffset;
                 const laserBottom = Number(y.toFixed(2)) - laserYOffset;
-                const laserHit = getElementsFromPoint(x, laserTop);
-                if(laserHit !== undefined){
-                    const { column, row } = laserHit as { row: number; column: number };
-                    console.log({column, row});
-                    const newRow = [...gameBoard[row]];
-                    newRow[column] = false;
-                    gameBoard[row] = newRow;
-
-
-                    currentlyFiring = false;
-                    laserBeginTime = undefined;
-                    laserYOffset = 0;
+                lookAtAllOfThePaths(x-50);
+                if(invaderHitColumn !== undefined && invaderHitRow !== undefined){
+                    console.log({ invaderHitRow, invaderHitColumn });
+                    const currentTime = performance.now();
+                    const laserTimeElapsed = currentTime - laserBeginTime >= Number((SETTINGS.LASER_DURATION / (invaderHitRow+1)));
+                    if (laserTimeElapsed) {
+                        removeInvader();
+                    } else {
+                        line.setAttribute("x1", `${x.toFixed(2)}`);
+                        line.setAttribute("y1", `${laserBottom}`);
+                        line.setAttribute("x2", `${x.toFixed(2)}`);
+                        line.setAttribute("y2", `${laserTop}`);
+                        line.setAttribute("stroke", "red");
+                        line.setAttribute("stroke-width", "10");
+                        group.appendChild(line);
+                    }
                     // updateControllerGrid([...gameBoard]);
                 }else{
                     line.setAttribute("x1", `${x.toFixed(2)}`);
@@ -440,6 +495,7 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
             group.appendChild(circle);
             peakX = Number(x.toFixed(2));
             peakY = y;
+            playerY = y;
             if (debuggerOn) addTextToSVGGroup(group, `x position ${peakX}`, peakX, y - 25);
             if (debuggerOn) addTextToSVGGroup(group, `player ${playerFrequency}mhz`, peakX, y - 10);
             if (debuggerOn) addTextToSVGGroup(group, `bin ${i}`, peakX, y + 5);
@@ -470,7 +526,7 @@ const makeGameBoard = ({
     const maxFFTValue = Math.max(...fftData);
     const minFFTValue = Math.min(...fftData);
     for(let i = 0; i < gameBoard.length; i++) {
-        paintRowOfInvaders({ 
+        paintRowOfInvaders({
             yOffset,
             xOffset,
             svgId,
@@ -531,6 +587,11 @@ function step(): void {
             svgId,
             xOffset,
         });
+        const noInvadersLeft = gameBoard.flat().every(cell => cell === false);
+        if(noInvadersLeft && !gameOver){
+            gameOver = true;
+            endGame();
+        }
     }
 
     // has the player's fft data changed since last frame?
@@ -601,6 +662,11 @@ function paintInvaderOnPeak(x: number, y: number, className: string, group: SVGG
     const scale = targetWidth / originalWidth;
 
     const innerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    if(playerY !== 0 && y > playerY && !gameOver){
+        console.log({ invaderY: y, playerY });
+        gameOver = true;
+        endGame();
+    }
     innerGroup.setAttribute("transform", `translate(${x}, ${y}) scale(${scale})`);
     innerGroup.setAttribute("class", className);
     innerGroup.setAttribute("id", `invader-row-${row}-column-${column}`);
@@ -700,12 +766,7 @@ function updateControllerGrid (gameboard: TGameBoard): void {
             const cellDiv = document.createElement("div");
             cellDiv.style.gridRow = (rowIndex + 1).toString();
             cellDiv.style.gridColumn = (colIndex + 1).toString();
-            cellDiv.style.width = "40px";
-            cellDiv.style.height = "40px";
-            cellDiv.style.boxSizing = "border-box";
-            cellDiv.style.border = 'red';
-            cellDiv.style.borderStyle = 'solid';
-            cellDiv.style.borderWidth = '2px';
+            cellDiv.setAttribute("class", "controller-cell");
             cellDiv.setAttribute("id", `cell-${rowIndex}-${colIndex}`);
             if (cell) {
                 cellDiv.style.backgroundColor = DEBUGGER_SETTINGS.CONTROLLER_CELL_COLOR_ACTIVE;
