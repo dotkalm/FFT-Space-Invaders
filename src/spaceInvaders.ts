@@ -861,10 +861,11 @@ document.addEventListener('keydown', (event) => {
         startGame();
     }
   }
-  if( event.key === ' ') {
-      if (!currentlyFiring) {
-          beginFire = true;
-          currentlyFiring = true;
-      }
-  }
+    if (event.key === ' ') {
+        event.preventDefault();
+        if (!currentlyFiring) {
+            beginFire = true;
+            currentlyFiring = true;
+        }
+    }
 });
