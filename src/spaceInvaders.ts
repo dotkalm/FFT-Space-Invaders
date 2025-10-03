@@ -291,7 +291,6 @@ export const paintRowOfInvaders = ({
     xOffset,
     svgId,
     maxFFTValue,
-    minFFTValue,
 }: TPaintRowOfInvadersParams): void => {
     const allPeaks = document.getElementsByClassName(`peak-${svgId-1}-row-${rowIndex}`);
     while(allPeaks[0]) {
@@ -411,6 +410,17 @@ function lookAtAllOfThePaths(x: number){
     }
 }
 
+function addScore(){
+    try{
+        const scoreElement = document.getElementById("score");
+        const pointsScored = gameBoard.flat().filter(cell => cell === false).length * 10;
+        scoreElement.textContent = `Score: ${pointsScored}`;
+        console.log(scoreElement, pointsScored);
+    }catch(e){
+        console.log(e);
+    }
+}
+
 function removeInvader(){
     try {
         if (invaderElement !== undefined || invaderElement !== null) {
@@ -419,6 +429,7 @@ function removeInvader(){
             const newRow = [...gameBoard[invaderHitRow]];
             newRow[invaderHitColumn] = false;
             gameBoard[invaderHitRow] = newRow;
+            addScore();
             currentlyFiring = false;
             laserBeginTime = undefined;
             laserYOffset = 0;
@@ -662,13 +673,10 @@ function moveInvadersLeftAndRight(): void {
     const increments = multiplier * SETTINGS.INVADER_X_MOVEMENT;
     xOffset += (direction === DIRECTION.RIGHT ? increments : -increments);
     const { left, right } = findEdgesOfGrid();
-    console.log({ left, right });
     if (right >= SETTINGS.INVADER_RIGHT_MOVEMENT_MAX) {
-        console.log('go left now');
         direction = DIRECTION.LEFT;
     }
     if (left <= SETTINGS.INVADER_LEFT_MOVEMENT_MIN) {
-        console.log('go right now');
         direction = DIRECTION.RIGHT;
     }
 };

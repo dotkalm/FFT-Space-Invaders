@@ -19,6 +19,9 @@ svg {
     height: 60vh;
     width: 50vw;
     background-color: black;
+    border-color: aqua;
+    border-style: solid;
+    border-width: 1px;
 }
 #stateButton{
     position: absolute;
@@ -64,4 +67,13 @@ svg {
   to {
     opacity: 0;
   }
+}
+
+#text-container {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
 }
