@@ -61,12 +61,14 @@ enum PLAY_STATE {
   PLAYING = 'playing',
   PAUSED = 'paused',
   STOPPED = 'stopped',
+  GAMEOVER = 'gameover',
 };
 
 enum PLAY_STATE_LABEL {
   CONTINUE = 'Continue Game',
   PAUSE = 'Pause Game',
   START = 'Start Game',
+  RESTART = 'Restart Game',
 }
 
 enum DIRECTION {
@@ -211,6 +213,7 @@ const startGame = (): void => {
 const endGame = (): void => {
     if(animationId) cancelAnimationFrame(animationId); 
     playing = !playing;
+    document.getElementById(SETTINGS.BUTTON_ID)!.textContent = PLAY_STATE_LABEL.RESTART;
 };
 
 const generatePlayerFrequency: TGeneratePlayerFrequency = ({
@@ -754,6 +757,8 @@ function currentStateLabel(): PLAY_STATE {
             return PLAY_STATE.PAUSED;
         case PLAY_STATE_LABEL.START:
             return PLAY_STATE.STOPPED;
+        case PLAY_STATE_LABEL.RESTART:
+            return PLAY_STATE.GAMEOVER;
     };
 };
 
@@ -772,6 +777,9 @@ document.getElementById(SETTINGS.BUTTON_ID)?.addEventListener("click", () => {
         document.getElementById(SETTINGS.BUTTON_ID)!.textContent = PLAY_STATE_LABEL.CONTINUE;
         if(animationId) cancelAnimationFrame(animationId); 
         playing = !playing;
+    }
+    if(currentState === PLAY_STATE.GAMEOVER && gameOver) {
+        window.location.reload();
     }
 });
 
