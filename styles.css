@@ -23,12 +23,13 @@ svg {
 
 #hit-dialog {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    bottom: 210px;
+    left: 220px;
     width: 200px;
-    height: 100px;
-    background-color: pink;
+    height: 50px;
     font-size: 48px;
+    color: red;
+    z-index: 10;
     font-weight: bold;
     text-align: center;
     pointer-events: none;
@@ -40,6 +41,22 @@ svg {
     box-sizing: border-box;
     border: red;
     border-style: solid;
-    border-width: 2px;
-    fill: rgba(255, 0, 0, 0.1);
+    border-width: 0px;
+    fill: rgba(255, 0, 0, 0);
+}
+
+.fade-out {
+    /* Start visible */
+    opacity: 1;
+    /* Wait 5 seconds, then fade out over 1 second */
+    animation: fadeOut .1s ease-in-out .2s forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }

@@ -79,8 +79,8 @@ enum SETTINGS {
     INVADER_COLOR = 'white',
     INVADER_FFT_START_PERCENTAGE_OFFSET = 0.08,
     INVADER_LEFT_MOVEMENT_MIN = 20,
-    INVADER_PEAK_DISPLACEMENT_THRESHOLD_X  = 25,
-    INVADER_PEAK_DISPLACEMENT_THRESHOLD_Y  = 40,
+    INVADER_PEAK_DISPLACEMENT_THRESHOLD_X  = 21,
+    INVADER_PEAK_DISPLACEMENT_THRESHOLD_Y  = 46,
     INVADER_RIGHT_MOVEMENT_MAX = 680,
     INVADER_ROW_HEIGHT = 100,
     INVADER_START_ROW_POSITION_X = 100,
@@ -100,13 +100,13 @@ enum SETTINGS {
     // GENERAL SETTINGS
     BUTTON_ID = 'stateButton',
     FFT_SIZE = 1024, // bin count is half this value
-    GAIN_VALUE = 0.1, // effects how accurately peaks are detected
+    GAIN_VALUE = 0.09, // effects how accurately peaks are detected
     INTERVAL = 100, // interval between oscillator sweeps in ms
     OSCILLATOR_DURATION = 0.1, // duration of each oscillator in seconds
     PEAK_COUNT = 55, // total number of invaders on game board
     PIXEL_WIDTH = 800, // game board width in pixels
     ROW_COUNT = 5, // number of rows of invaders
-    TIME_OFFSET_PER_OSCILLATOR = 0, // offset each oscillator by this amount to avoid all starting at the same time
+    TIME_OFFSET_PER_OSCILLATOR = 100, // offset each oscillator by this amount to avoid all starting at the same time
     // Laser settings
     LASER_DURATION = 500, // duration of laser firing in ms
 };
@@ -249,8 +249,6 @@ const playTones: TPaintInvaders = ({
 }) => {
     const sineWave = createSineWave(audioCtx); // most basic sine wave possible
     
-    const newJson = JSON.stringify(gameBoard);
-
     const gameOver = gameBoard.flat().every(cell => !cell);
     gameOver && endGame();
 
@@ -300,7 +298,7 @@ export const paintRowOfInvaders = ({
     const className = `peak-${svgId}-row-${rowIndex}`;
     group.setAttribute("class", className);
     const topOfLine = `${yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT) + (minFFTValue + 60)/2}`;
-    let path = `M ${SETTINGS.INVADER_ROW_HEIGHT} ${topOfLine}`; // Starting point
+    let path = '';
     let x = SETTINGS.INVADER_START_ROW_POSITION_X + xOffset;
     const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
     gridContainer.style.transform = `translate(${xOffset * .585}px, ${yOffset * .585}px)`;
@@ -320,7 +318,14 @@ export const paintRowOfInvaders = ({
         const diffFromMax = Math.abs(maxFFTValue - fftData[i+2]);
         x += invaderStepWidth;
         const y = (yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)) + (fftData[i+2] / 2);
+        if(i==binStartIndex){
+            path = `M -200 ${y.toFixed(2)}`; // Starting point
+            path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
+        }
         path = `${path} L${x.toFixed(2)} ${y.toFixed(2)}`;
+        if(i=== binEndIndex-1){
+            path = `${path} L2000 ${y.toFixed(2)}`;
+        }
 
         // is this a peak
         const displacedOnYAxis = diffFromMax < SETTINGS.INVADER_PEAK_DISPLACEMENT_THRESHOLD_Y ;
@@ -333,10 +338,10 @@ export const paintRowOfInvaders = ({
         if(displacedOnYAxis && displacedOnXAxis && correspondsToGameboard !== undefined){
             const isActive = gameBoard[rowIndex][peakNumber];
             lastPeakDetected = x;
-            isActive && paintInvaderOnPeak(Number(x.toFixed(2)), yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT), className, group, {
-                row: rowIndex,
-                column: peakNumber,
-            });
+            // isActive && paintInvaderOnPeak(Number(x.toFixed(2)), yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT), className, group, {
+                // row: rowIndex,
+                // column: peakNumber,
+            // });
             if(debuggerOn) addTextToSVGGroup(group, `bin ${i}`, Number(x.toFixed(2))-10, yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)+70);
             if(debuggerOn) addTextToSVGGroup(group, `${mhzValues[rowIndex][peakNumber]}mhz`, Number(x.toFixed(2))-10, yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)+85);
             if(debuggerOn) addTextToSVGGroup(group, `x: ${Number(x.toFixed(2))}`, Number(x.toFixed(2))-10, yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT)+100);
@@ -345,15 +350,12 @@ export const paintRowOfInvaders = ({
         }
     }
     x += invaderStepWidth;
-    path = `${path} L${x.toFixed(2)} ${topOfLine}`;
-    if(debuggerOn){
-        const newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        newPath.setAttribute("d", path);
-        newPath.setAttribute("stroke", "yellow");
-        newPath.setAttribute("stroke-width", "1");
-        newPath.setAttribute("fill", "none");
-        group.appendChild(newPath);
-    }
+    const newPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    newPath.setAttribute("d", path);
+    newPath.setAttribute("stroke", "yellow");
+    newPath.setAttribute("stroke-width", "1");
+    newPath.setAttribute("fill", "none");
+    group.appendChild(newPath);
 
     group.setAttribute("id", `group-${svgId}-row-${rowIndex}`);
     document.getElementById("gameBoard")?.appendChild(group);
@@ -361,7 +363,6 @@ export const paintRowOfInvaders = ({
 
 function getElementsFromPoint(x: number, y: number): void | { row: number; column: number } {
     const elements = document.elementsFromPoint(x, y);
-    // console.log('elements from point', elements);
     const cellsInColumn: Element[] = [];
     for (const element of elements) {
         if(element.getAttribute('id')?.startsWith('cell-')){
@@ -378,12 +379,12 @@ function getElementsFromPoint(x: number, y: number): void | { row: number; colum
 }
 
 const addTextToDiv = (text: string, container: HTMLElement): void => {
-    const previousText = container.getElementsByClassName("hit-text");
+    const previousText = container.getElementsByClassName("fade-out");
     while(previousText[0]) {
         previousText[0].parentNode?.removeChild(previousText[0]);
     }
     const div = document.createElement("div");
-    div.setAttribute("class", "hit-text");
+    div.setAttribute("class", "fade-out");
     div.textContent = text;
     container.appendChild(div);
 };
@@ -412,7 +413,7 @@ function lookAtAllOfThePaths(x: number){
 function removeInvader(){
     try {
         if (invaderElement !== undefined || invaderElement !== null) {
-            addTextToDiv(`Hit! row ${invaderHitRow + 1} column ${invaderHitColumn + 1}`, document.getElementById("hit-dialog")!);
+            addTextToDiv('Hit!', document.getElementById("hit-dialog")!);
 
             const newRow = [...gameBoard[invaderHitRow]];
             newRow[invaderHitColumn] = false;
@@ -459,7 +460,6 @@ const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
                 const laserBottom = Number(y.toFixed(2)) - laserYOffset;
                 lookAtAllOfThePaths(x-50);
                 if(invaderHitColumn !== undefined && invaderHitRow !== undefined){
-                    console.log({ invaderHitRow, invaderHitColumn });
                     const currentTime = performance.now();
                     const laserTimeElapsed = currentTime - laserBeginTime >= Number((SETTINGS.LASER_DURATION / (invaderHitRow+1)));
                     if (laserTimeElapsed) {
@@ -622,20 +622,53 @@ function step(): void {
     animationId = requestAnimationFrame(step);
 };
 
+function findEdgesOfGrid(): { left: number; right: number } {
+    let leftIndex = 0;
+    let rightIndex = 0;
+    const [ row ] = gameBoard;
+    for (let i = 0; i < row.length; i++) {
+        const column = [];
+        for(let j = 0; j < gameBoard.length; j++) {
+            column.push(gameBoard[j][i]);
+        }
+        const someTrue = column.some(cell => cell === true);
+        if(someTrue){
+            leftIndex = i;
+            break;
+        }
+    }
+    for(let i = row.length - 1; i >= 0; i--) {
+        const column = [];
+        for(let j = gameBoard.length - 1; j >= 0; j--) {
+            column.push(gameBoard[j][i]);
+        }
+        const someTrue = column.some(cell => cell === true);
+        if(someTrue){
+            rightIndex = i;
+            break;
+        }
+    }
+    const rightBoundingBox = document.getElementById(`cell-0-${rightIndex}`)?.getBoundingClientRect();
+    const leftBoundingBox = document.getElementById(`cell-0-${leftIndex}`)?.getBoundingClientRect();
+    return {
+        left: leftBoundingBox!.left,
+        right: rightBoundingBox!.right,
+    }
+}
+
 function moveInvadersLeftAndRight(): void {
     const multiplier = gameBoard.flat().filter(e => !e).length + 1;
     const increments = multiplier * SETTINGS.INVADER_X_MOVEMENT;
     xOffset += (direction === DIRECTION.RIGHT ? increments : -increments);
-    for (let i = 0; i < gameBoard.length; i++) {
-        const svgGroup = document.getElementById(`group-${svgId}-row-${i}`);
-        if(!svgGroup) continue;
-        const { left, right } = svgGroup.getBoundingClientRect();
-        if(right >= SETTINGS.INVADER_RIGHT_MOVEMENT_MAX){
-            direction = DIRECTION.LEFT;
-        }
-        if(left <= SETTINGS.INVADER_LEFT_MOVEMENT_MIN){
-            direction = DIRECTION.RIGHT;
-        }
+    const { left, right } = findEdgesOfGrid();
+    console.log({ left, right });
+    if (right >= SETTINGS.INVADER_RIGHT_MOVEMENT_MAX) {
+        console.log('go left now');
+        direction = DIRECTION.LEFT;
+    }
+    if (left <= SETTINGS.INVADER_LEFT_MOVEMENT_MIN) {
+        console.log('go right now');
+        direction = DIRECTION.RIGHT;
     }
 };
 
@@ -663,7 +696,6 @@ function paintInvaderOnPeak(x: number, y: number, className: string, group: SVGG
 
     const innerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     if(playerY !== 0 && y > playerY && !gameOver){
-        console.log({ invaderY: y, playerY });
         gameOver = true;
         endGame();
     }
