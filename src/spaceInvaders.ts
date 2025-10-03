@@ -418,9 +418,7 @@ function addScore(){
         const scoreElement = document.getElementById("score");
         const pointsScored = gameBoard.flat().filter(cell => cell === false).length * 10;
         scoreElement.textContent = `Score: ${pointsScored}`;
-        console.log(scoreElement, pointsScored);
     }catch(e){
-        console.log(e);
     }
 }
 
@@ -442,7 +440,6 @@ function removeInvader(){
             invaderElement = undefined;
         }
     } catch (e) {
-        console.log(e);
     }
 }
 const paintPlayerPosition = ({ fftData }: TPaintPlayerPosition): void => {
@@ -842,27 +839,27 @@ function addTextToSVGGroup ( group: SVGGElement, text: string, x: number, y: num
 };
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'd') {
-    debuggerOn = !debuggerOn;
-    const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
-    gridContainer.style.visibility = "visible";
-  }
-  if( event.key === CONTROLS.VIM_RIGHT || event.key === CONTROLS.RIGHT) {
-    if(playerPosition >= SETTINGS.PIXEL_WIDTH) return;
-    playerPosition += SETTINGS.PLAYER_X_MOVEMENT;
-  }
-  if( event.key === CONTROLS.VIM_LEFT || event.key === CONTROLS.LEFT) {
-    if(playerPosition <= 0) return;
-    playerPosition -= SETTINGS.PLAYER_X_MOVEMENT;
-  }
-  if( event.key === CONTROLS.START) {
-    const currentState = currentStateLabel();
-    if(currentState === PLAY_STATE.STOPPED) {
-        startGame();
+    event.preventDefault();
+    if (event.key === 'd') {
+        debuggerOn = !debuggerOn;
+        const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
+        gridContainer.style.visibility = "visible";
     }
-  }
+    if (event.key === CONTROLS.VIM_RIGHT || event.key === CONTROLS.RIGHT) {
+        if (playerPosition >= SETTINGS.PIXEL_WIDTH) return;
+        playerPosition += SETTINGS.PLAYER_X_MOVEMENT;
+    }
+    if (event.key === CONTROLS.VIM_LEFT || event.key === CONTROLS.LEFT) {
+        if (playerPosition <= 0) return;
+        playerPosition -= SETTINGS.PLAYER_X_MOVEMENT;
+    }
+    if (event.key === CONTROLS.START) {
+        const currentState = currentStateLabel();
+        if (currentState === PLAY_STATE.STOPPED) {
+            startGame();
+        }
+    }
     if (event.key === ' ') {
-        event.preventDefault();
         if (!currentlyFiring) {
             beginFire = true;
             currentlyFiring = true;
