@@ -293,11 +293,16 @@ export const paintRowOfInvaders = ({
     maxFFTValue,
     minFFTValue,
 }: TPaintRowOfInvadersParams): void => {
+    const allPeaks = document.getElementsByClassName(`peak-${svgId-1}-row-${rowIndex}`);
+    while(allPeaks[0]) {
+        allPeaks[0].parentNode?.removeChild(allPeaks[0]);
+    }
+    const rowHasActiveInvaders = gameBoard[rowIndex].some(cell => cell === true);
+    if(!rowHasActiveInvaders) return;
     // create group for this row so it can be easily removed on the next frame
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const className = `peak-${svgId}-row-${rowIndex}`;
     group.setAttribute("class", className);
-    const topOfLine = `${yOffset + (rowIndex * SETTINGS.INVADER_ROW_HEIGHT) + (minFFTValue + 60)/2}`;
     let path = '';
     let x = SETTINGS.INVADER_START_ROW_POSITION_X + xOffset;
     const gridContainer = document.getElementById(DEBUGGER_SETTINGS.CONTROLLER_GRID_ID);
@@ -305,10 +310,6 @@ export const paintRowOfInvaders = ({
     invaderStepWidth = Number((SETTINGS.PIXEL_WIDTH / binsPerRow).toFixed(2));
 
     // Remove peaks from last animation frame before drawing new ones
-    const allPeaks = document.getElementsByClassName(`peak-${svgId-1}-row-${rowIndex}`);
-    while(allPeaks[0]) {
-        allPeaks[0].parentNode?.removeChild(allPeaks[0]);
-    }
 
     // Draw the invaders 
     let lastPeakDetected: number;
@@ -685,6 +686,7 @@ function paintInvaderOnPeakFrequencies(bracketFrequencyRanges: { min: number; ma
   );
 }
 
+/*
 function paintInvaderOnPeak(x: number, y: number, className: string, group: SVGGElement, { row, column }: { row: number; column: number }): void {
     const invaderPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     invaderPath.setAttribute("d", invaderSVGPath);
@@ -706,6 +708,7 @@ function paintInvaderOnPeak(x: number, y: number, className: string, group: SVGG
 
     group.appendChild(innerGroup);
 };
+*/
 
 function createSineWave(audioContext: AudioContext): PeriodicWave {
     // sine wave with only 1 harmonic
